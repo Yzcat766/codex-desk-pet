@@ -1,83 +1,55 @@
-# Claude 娘桌宠 · claude-desk-pet
+# Codex Desk Pet
 
-一个给 [Claude Code](https://claude.com/claude-code) 用的小插件：Claude 干活的时候，桌面上会有一个 Q 版 Claude 娘陪着你，实时显示它在做什么。
+Windows 透明桌宠。Codex 提交任务、执行命令、读文件、等待授权、结束或被打断时，桌宠根据本机 Hook 事件换表情。它可独立常驻，支持拖动、大小、音效、关注会话和 Codex 前台自动隐藏。
 
-![六种状态预览](docs/preview.png)
+## 安装和启动
 
-## 功能
+需要 Windows 10/11、带 Tk 的 Python 3.10+，以及支持相应生命周期 Hooks 的 Codex 客户端。安装器会检查 CLI 或桌面包，使用已有的 Pillow，或把依赖安装到桌宠目录。
 
-**🧡 桌宠悬浮窗**：透明背景、永远置顶，可以拖到屏幕任何位置
+在本仓库目录打开 PowerShell：
 
-| Claude 在做什么 | 桌宠的样子 |
-|---|---|
-| 思考中 | 闭眼想事情，"思考中…" |
-| 跑命令、改文件 | 敲键盘，气泡里显示正在改哪个文件 |
-| 读文件、搜索、上网查 | 捧着书记笔记 |
-| 回复完，等你说话 | 敲门："轮到你啦！" |
-| 出错 | 慌张冒汗 |
-| 被你打断 | 心虚 |
-| 干了 3 分钟以上的大活 | 撒花庆祝 🎉 |
-| 等你超过 10 分钟 | 开始发呆 zZ |
-
-还有一个彩蛋：连续出错 3 次会……石化 🗿
-
-- **双击**桌宠：把 Claude 窗口叫到前台
-- **右键**菜单：调大小（小/中/大）、切到 Claude 时自动隐藏、提示音开关、退出
-
-**📊 Token 状态栏**：输入框下方常驻一行用量信息
-
-> 📊 本会话 输入 12.3k · 输出 4.1k · 缓存命中 87% · $0.42 · 上下文 31% · 5h额度 23%
-
-**🔔 提示音**：回复完播放钢琴"叮咚"，出错播放复古 RPG"哔哔"
-
-**命令**
-
-- `/token-stats`：查看本会话和本项目累计的 token 用量、缓存命中率、额度
-- `/pet`：不小心关掉了桌宠？用它重新召唤
-
-## 运行要求
-
-> 🍎 **macOS 用户**：这个仓库目前只支持 Windows，请使用 [wangmeng003](https://github.com/wangmeng003) 维护的 Mac 移植版：[claude-desk-pet-mac](https://github.com/wangmeng003/claude-desk-pet-mac)
-
-- **Windows**（悬浮窗和提示音用的是 Windows 的接口）
-- **Python 3**，并且在命令行里输入 `python` 能直接运行
-- **Pillow** 图像库，用下面这条命令安装：
-
-```bash
-pip install pillow
+```powershell
+.\install.ps1
 ```
 
-## 安装
+Python 没有加入 PATH 时，传入解释器的实际路径：
 
-**在终端里的 Claude Code**，输入：
-
-```
-/plugin install desk-pet --marketplace BingXing-ai/claude-desk-pet
+```powershell
+.\install.ps1 -PythonExe 'C:\Program Files\Python313\python.exe'
 ```
 
-然后按 `y` 添加插件市场，选择 user（用户）范围，按回车确认。
+安装会启动桌宠并合并用户级 `hooks.json`。重启 Codex，在桌面端 **Settings → Hooks** 或输入框的 **Review hooks** 审查并信任桌宠条目。CLI 用 `/hooks`。打开新会话，提交一条只读任务。看到气泡变化，或运行目录里的 `sessions\*.json` 更新时间变化，即可确认 Hook 在运行。
 
-**也可以在命令行里运行：**
+关闭后可用 `.\start.ps1` 恢复。更新前从右键菜单退出桌宠，拉取或修改源码后重新运行安装脚本，并在 Codex 中审查变更过的 Hook。卸载前退出桌宠，再运行 `.\uninstall.ps1`。设置和本地会话记录默认保留。
 
-```bash
-claude plugin install desk-pet --marketplace BingXing-ai/claude-desk-pet
+## 桌面操作
+
+| 操作 | 效果 |
+| --- | --- |
+| 拖动立绘或气泡 | 移动桌宠并保存位置 |
+| 双击 | 唤醒可识别的 Codex Windows 桌面窗口 |
+| 右键 | 设置小、中、大尺寸、提示音、前台隐藏和开机启动 |
+| 关注会话 | 自动选择最近活动会话，也可固定一个会话 |
+| 查看当前状态 | 显示当前状态、已观察的任务用时和可用 Token 数据 |
+| 打开 Codex | 优先激活已有窗口，否则启动已识别的 MSIX 应用 |
+
+开机启动由用户在菜单中启用，仅针对当前 Windows 用户。双击和自动隐藏识别的是桌面应用的窗口归属。CLI 和 VS Code 的窗口关联见兼容性说明。
+
+## 自定义和排查
+
+- 在 `pet/config.py` 改台词和立绘映射。替换 `pet/sprites/` 内同名透明 PNG 或 `sounds/` 内的 WAV 后重新安装。
+- 默认运行目录为 `%LOCALAPPDATA%\CodexDeskPet`。其中 `settings.json` 保存界面设置，`sessions/` 保存本地会话状态。
+- 详见[安装与配置](docs/installation.md)、[架构与上游差异](docs/architecture.md)、[故障排查](docs/troubleshooting.md)和[客户端兼容性与实测记录](docs/codex-compatibility.md)。
+
+## 开发测试
+
+```powershell
+python -m unittest discover -s tests -v
+python tests/windows_smoke.py
 ```
 
-**在 Claude 桌面端**：点输入框旁边的 **+** → **Plugins** → **Add marketplace**，填入 `BingXing-ai/claude-desk-pet`，再点 **Add plugin**。
+真实 Codex 二进制的隔离集成测试用法见[兼容性说明](docs/codex-compatibility.md)。
 
-装好后，新开一个会话，桌宠就会出现在屏幕右下角。
+## 来源和许可
 
-## 自定义
-
-- **换立绘**：把 `pet/sprites/` 里的 PNG 换成你自己的图（透明背景，文件名保持不变）
-- **换提示音**：替换 `sounds/done.wav`（完成）和 `sounds/error.wav`（出错）
-- **改台词**：气泡里的文字写在 `hooks/register.ts` 里
-
-桌宠的位置、大小和开关保存在 `~/.claude/desk-pet/settings.json`。
-
-## 说明
-
-- 这是个人粉丝作品，与 Anthropic 官方无关
-- 立绘由作者用 AI 绘图生成，最初是为自己的视频做的素材
-- 代码使用 MIT 许可证，详见 [LICENSE](LICENSE)
-- 感谢 [wangmeng003](https://github.com/wangmeng003) 移植了 [macOS 版](https://github.com/wangmeng003/claude-desk-pet-mac)
+基于 [BingXing-ai/claude-desk-pet](https://github.com/BingXing-ai/claude-desk-pet) 的 `0784c254f9dead6d000dc5717a36ce19992f8c8d`，保留上游 Git 历史、原作者版权、立绘和音效。使用 [MIT 许可证](LICENSE)。本项目由社区维护。

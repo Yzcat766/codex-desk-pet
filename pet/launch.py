@@ -1,26 +1,36 @@
-# 用 pythonw 把桌宠作为独立进程启动，然后立刻退出（mod 那边就不会被卡住）
-# 用法：python launch.py <pet.pyw 路径> <运行目录>
-import os
+"""Start the GUI in its own Windows process."""
+import argparse
+import logging
 import subprocess
 import sys
+from pathlib import Path
 
-pet_script, run_dir = sys.argv[1], sys.argv[2]
-pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
-if not os.path.exists(pythonw):
-    pythonw = sys.executable
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from pet.config import configure_log, run_dir
 
-DETACHED = 0x00000008
-NEW_GROUP = 0x00000200
-BREAKAWAY = 0x01000000  # 脱离 Claude 的作业对象，会话结束时桌宠不会被一起关掉
 
-os.makedirs(run_dir, exist_ok=True)
-with open(os.path.join(run_dir, 'launch.log'), 'w', encoding='utf-8') as log:
-    log.write(f'python={sys.executable}\npythonw={pythonw}\n')
-    for flags in (DETACHED | NEW_GROUP | BREAKAWAY, DETACHED | NEW_GROUP):
-        try:
-            proc = subprocess.Popen([pythonw, pet_script, run_dir], creationflags=flags, close_fds=True,
-                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            log.write(f'启动成功 pid={proc.pid} flags={flags:#x}\n')
-            break
-        except OSError as err:
-            log.write(f'flags={flags:#x} 失败：{err}\n')
+def launch(directory):
+    interpreter = Path(sys.executable).with_name("pythonw.exe")
+    if not interpreter.is_file():
+        interpreter = Path(sys.executable)
+    script = Path(__file__).with_name("pet.pyw")
+    flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+    with (directory / "launch.log").open("a", encoding="utf-8") as log:
+        for creation_flags in (flags | subprocess.CREATE_BREAKAWAY_FROM_JOB, flags):
+            try:
+                process = subprocess.Popen([str(interpreter), str(script), str(directory)],
+                                           stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                                           creationflags=creation_flags, close_fds=True)
+                logging.info("Desktop pet process started (pid=%s)", process.pid)
+                return
+            except OSError as exc:
+                last_error = exc
+        raise last_error
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("data_dir", nargs="?", type=Path, default=run_dir())
+    args = parser.parse_args()
+    configure_log(args.data_dir, "pet-launch.log")
+    launch(args.data_dir)
