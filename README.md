@@ -2,6 +2,12 @@
 
 Windows 透明桌宠。Codex 提交任务、执行命令、读文件、等待授权、结束或被打断时，桌宠根据本机 Hook 事件换表情。它可独立常驻，支持拖动、大小、音效、关注会话和 Codex 前台自动隐藏。
 
+## 桌宠预览
+
+| 思考中 | 执行工具 | 等待确认 | 完成任务 |
+| :---: | :---: | :---: | :---: |
+| <img src="pet/sprites/smile-closed.png" width="128" alt="桌宠闭眼思考"> | <img src="pet/sprites/typing.png" width="128" alt="桌宠敲键盘"> | <img src="pet/sprites/knock.png" width="128" alt="桌宠敲门提醒确认"> | <img src="pet/sprites/confetti.png" width="128" alt="桌宠撒花庆祝任务完成"> |
+
 ## 安装和启动
 
 需要 Windows 10/11、带 Tk 的 Python 3.10+，以及支持相应生命周期 Hooks 的 Codex 客户端。安装器会检查 CLI 或桌面包，使用已有的 Pillow，或把依赖安装到桌宠目录。
